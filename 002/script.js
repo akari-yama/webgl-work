@@ -31,7 +31,7 @@ class ThreeApp {
 
   static AMBIENT_LIGHT_PARAM = {
     color: 0xffffff,
-    intensity: 1.5,
+    intensity: 2,
   };
 
   renderer;
