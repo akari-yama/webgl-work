@@ -1,7 +1,7 @@
 // 必要なモジュールを読み込み
 import * as THREE from '../lib/three.module.js';
 import { OrbitControls } from '../lib/OrbitControls.js';
-import { GLTFLoader } from '../lib/GLTFLoader.js'; // glTF のローダーを追加 @@@
+import { GLTFLoader } from '../lib/GLTFLoader.js';
 
 window.addEventListener('DOMContentLoaded', async () => {
   const wrapper = document.querySelector('#webgl');
@@ -166,7 +166,7 @@ class ThreeApp {
     // 軸ヘルパー
     const axesBarLength = 5.0;
     this.axesHelper = new THREE.AxesHelper(axesBarLength);
-    this.scene.add(this.axesHelper);
+    // this.scene.add(this.axesHelper);
 
     // コントロール
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -180,27 +180,40 @@ class ThreeApp {
   load() {
     return new Promise((resolve) => {
       const gltfPaths = [
-        { path: './assets/plain.gltf' }, // plain.gltfは特別扱い
-        { path: './assets/cherry.gltf', position: { x: -5, y: 3, z: 0 }, name: 'cherry' },
-        { path: './assets/mikan.gltf', position: { x: -4, y: 3, z: 0 }, name: 'mikan' },
-        { path: './assets/pine.gltf', position: { x: -3, y: 3, z: 0 }, name: 'pine' },
-        { path: './assets/melon.gltf', position: { x: -2, y: 3, z: 0 }, name: 'melon' },
-        { path: './assets/banana.gltf', position: { x: -1, y: 3, z: 0 }, name: 'banana' },
-        { path: './assets/strawberry.gltf', position: { x: 0, y: 3, z: 0 }, name: 'strawberry' },
-        { path: './assets/jelly_green.gltf', position: { x: 1, y: 3, z: 0 }, name: 'jelly_green' },
-        { path: './assets/jelly_red.gltf', position: { x: 1, y: 4, z: 0 }, name: 'jelly_red' },
-        { path: './assets/peach.gltf', position: { x: 2, y: 3, z: 0 }, name: 'peach' },
-        { path: './assets/beans.gltf', position: { x: 3, y: 3, z: 0 }, name: 'beans' },
-        { path: './assets/raisin.gltf', position: { x: 4, y: 3, z: 0 }, name: 'raisin' },
+        { path: './assets/ice.glb' },
+        { path: './assets/cherry.glb', position: { x: 0, y: 1.2, z: 0 }, name: 'cherry' },
+        { path: './assets/mikan.glb', position: { x: 0, y: -0.8, z: 2.3 }, rotation: { x: Math.PI / 1.5, y: Math.PI / 4.5, z: 0 }, name: 'mikan01' },
+        { path: './assets/mikan.glb', position: { x: -2.3, y: -1, z: 0 }, rotation: { x: 0, y: Math.PI / 1.5, z: 0 }, name: 'mikan03' },
+        { path: './assets/mikan.glb', position: { x: 0, y: -0.8, z: -2.1 }, rotation: { x: 0, y: Math.PI / 4, z: 0 }, name: 'mikan03' },
+        { path: './assets/pine.glb', position: { x: -1.5, y: -0.6, z: 1.7 }, rotation: { x: 0, y: Math.PI / 12, z: 0 }, name: 'pine1' },
+        { path: './assets/pine.glb', position: { x: -0.8, y: 0, z: -1.5 }, rotation: { x: 0, y: Math.PI / 2, z: Math.PI / 3.5 }, name: 'pine2' },
+        { path: './assets/pine.glb', position: { x: 1.7, y: -0.8, z: -1.2 }, name: 'pine3' },
+        { path: './assets/melon.glb', position: { x: 2, y: -0.5, z: 0.5 }, name: 'melon' },
+        { path: './assets/banana.glb', position: { x: 1.5, y: -1, z: 1.6 }, rotation: { x: Math.PI / 1.8, y: 0, z: 0 }, name: 'banana01' },
+        { path: './assets/banana.glb', position: { x: -1.5, y: -1, z: -1.5 }, rotation: { x: 0, y: Math.PI / 2.5, z: 0 }, name: 'banana02' },
+        { path: './assets/strawberry.glb', position: { x: -1.5, y: 0.2, z: 0 }, rotation: { x: 0, y: Math.PI / 4, z: 0 }, name: 'strawberry01' },
+        { path: './assets/strawberry.glb', position: { x: 1.5, y: 0.2, z: -0.3 }, rotation: { x: 0, y: Math.PI / -1.5, z: 0 }, name: 'strawberry02' },
+        { path: './assets/jelly_green.glb', position: { x: -1, y: -1.4, z: 2.2 }, name: 'jelly_green01' },
+        { path: './assets/jelly_green.glb', position: { x: 0.8, y: 0.2, z: -1.5 }, name: 'jelly_green02' },
+        { path: './assets/jelly_red.glb', position: { x: 1.2, y: -0.1, z: 1 }, name: 'jelly_red01' },
+        { path: './assets/peach.glb', position: { x: 0, y: 0.7, z: -1 }, rotation: { x: 0, y: Math.PI / -1.5, z: 0 }, name: 'peach01' },
+        { path: './assets/beans.glb', position: { x: 2.2, y: -1.0, z: -0.3 }, rotation: { x: 0, y: Math.PI / -1.5, z: 0 }, name: 'beans' },
+        { path: './assets/raisin.glb', position: { x: -0.8, y: 0.5, z: 1.2 }, rotation: { x: Math.PI / 4, y: 0, z: 0 }, name: 'raisin01' },
+        { path: './assets/raisin.glb', position: { x: 0.8, y: 0.5, z: 0.8 }, name: 'raisin02' },
+        { path: './assets/raisin.glb', position: { x: 0, y: 0, z: 1.6 }, rotation: { x: Math.PI / 2, y: 0, z: 0 }, name: 'raisin03' }
       ];
 
       const loader = new GLTFLoader();
-      const promises = gltfPaths.map(({ path, position, name }) =>
+      const promises = gltfPaths.map(({ path, position, rotation, name }) =>
         new Promise((res) => {
           loader.load(path, (gltf) => {
             const scene = gltf.scene;
 
-            if (path.includes('plain')) {
+            if (rotation) {
+              scene.rotation.set(rotation.x, rotation.y, rotation.z);
+            }
+
+            if (path.includes('ice')) {
               this.gltfScenes.push(scene);
             } else {
               this.gltfScenes.push(scene);
@@ -247,10 +260,12 @@ class ThreeApp {
         // 同じオブジェクトをクリックした場合は選択解除
         this.selectedObject = null;
         this.isDragging = false;
+        this.renderer.domElement.style.cursor = "grab";
       } else {
         // 新しいオブジェクトを選択
         this.selectedObject = parent;
         this.isDragging = true;
+        this.renderer.domElement.style.cursor = "grabbing";
       }
     } else {
       // オブジェクト外をクリックした場合、選択解除
@@ -306,10 +321,6 @@ class ThreeApp {
       case "s": // z軸に対して手前に移動
         this.selectedObject.position.z += moveSpeed;
         break;
-      case "Delete": // `Delete`キーでオブジェクトを削除
-        this.scene.remove(this.selectedObject);  // シーンからオブジェクトを削除
-        this.selectedObject = null;  // 選択されたオブジェクトをnullにリセット
-        break;
       default:
         break;
     }
@@ -329,7 +340,6 @@ class ThreeApp {
       const object = intersects[0].object;
       let parent = object;
 
-      // 対象オブジェクトの親を確認
       while (parent.parent) {
         if (this.objects.includes(parent)) {
           break;
@@ -339,7 +349,7 @@ class ThreeApp {
 
       // オブジェクトを複製して追加
       const clone = parent.clone();
-      clone.position.add(new THREE.Vector3(2, 0, 0)); // 少しずらして配置
+      clone.position.add(new THREE.Vector3(2, 0, 0));
       this.scene.add(clone);
       this.objects.push(clone);
     }
@@ -363,4 +373,5 @@ class ThreeApp {
     // レンダラーで描画
     this.renderer.render(this.scene, this.camera);
   }
+
 }

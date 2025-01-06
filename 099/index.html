@@ -2,16 +2,41 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <script src="script.js" type="module"></script>
     <style>
       * {margin: 0; padding: 0;}
       html, body {
         overflow: hidden;
       }
+      .webgl {
+        cursor: grab;
+        position: relative;
+      }
+      .panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: inline-block;
+        width: 240px;
+        background-color: rgba(76,156,206,0.4);
+        padding: 20px;
+      }
+      .panel ul {
+        margin-left: 20px;
+      }
     </style>
   </head>
   <body>
-    <div id="webgl"></div>
+    <div id="webgl" class="webgl"></div>
+    <div class="panel">
+      <ul>
+        <li>選択中にclick：選択解除</li>
+        <li>選択中にalt+click：複製</li>
+        <li>← →：y軸回転</li>
+        <li>↑ ↓：x軸回転</li>
+        <li>w / s：z軸移動</li>
+      </ul>
+    </div>
   </body>
+  <script src="script.js" type="module"></script>
 </html>
 
