@@ -276,24 +276,35 @@ class ThreeApp {
 
   handleMouseMove(event) {
     if (this.isDragging && this.selectedObject) {
+      // マウス位置の正規化
       const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
       const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      const mouseVector = new THREE.Vector3(mouseX, mouseY, 0.5);
-      mouseVector.unproject(this.camera);
+      const currentMouse = new THREE.Vector2(mouseX, mouseY);
 
-      const dir = mouseVector.sub(this.camera.position).normalize();
-      const distance = -this.camera.position.z / dir.z;
-      const position = this.camera.position.clone().add(dir.multiplyScalar(distance));
+      // カメラ基準の平面を取得
+      const planeNormal = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      const plane = new THREE.Plane(planeNormal, -this.selectedObject.position.dot(planeNormal));
 
-      // xとy軸の位置のみ更新
-      this.selectedObject.position.set(position.x, position.y, this.selectedObject.position.z);
+      // マウス位置からレイキャスト
+      this.raycaster.setFromCamera(currentMouse, this.camera);
+      const intersection = new THREE.Vector3();
+      this.raycaster.ray.intersectPlane(plane, intersection);
+
+      // 初期位置とマウスの移動量を考慮してオブジェクトを移動
+      const offset = intersection.clone().sub(this.selectedObject.position);
+      if (!this.dragStartOffset) {
+        this.dragStartOffset = offset;
+      }
+      const newPosition = intersection.clone().sub(this.dragStartOffset);
+      this.selectedObject.position.copy(newPosition);
     }
   }
 
   handleMouseUp() {
     if (this.isDragging) {
       this.isDragging = false;
+      this.dragStartOffset = null; // 初期位置オフセットをリセット
     }
   }
 
@@ -301,25 +312,46 @@ class ThreeApp {
     if (!this.selectedObject) return;
 
     const moveSpeed = 0.1; // 移動速度
+    const rotationSpeed = Math.PI / 180 * 5;
+
+    // カメラのローカル座標系に基づいて移動
+    const cameraDirection = new THREE.Vector3();
+    this.camera.getWorldDirection(cameraDirection);
+
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion).normalize();
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion).normalize();
+    const forward = cameraDirection.clone().normalize();
 
     switch (event.key) {
-      case "ArrowLeft":
-        this.selectedObject.rotation.y -= Math.PI / 180 * 5;
+      case "ArrowLeft": // 左回転
+        this.selectedObject.rotation.y -= rotationSpeed;
         break;
-      case "ArrowRight":
-        this.selectedObject.rotation.y += Math.PI / 180 * 5;
+      case "ArrowRight": // 右回転
+        this.selectedObject.rotation.y += rotationSpeed;
         break;
-      case "ArrowUp":
-        this.selectedObject.rotation.x -= Math.PI / 180 * 5;
+      case "ArrowUp": // 前傾
+        this.selectedObject.rotation.x -= rotationSpeed;
         break;
-      case "ArrowDown":
-        this.selectedObject.rotation.x += Math.PI / 180 * 5;
+      case "ArrowDown": // 後傾
+        this.selectedObject.rotation.x += rotationSpeed;
         break;
-      case "w": // z軸に対して奥に移動
-        this.selectedObject.position.z -= moveSpeed;
+      case "w": // 前進
+        this.selectedObject.position.addScaledVector(forward, moveSpeed);
         break;
-      case "s": // z軸に対して手前に移動
-        this.selectedObject.position.z += moveSpeed;
+      case "s": // 後退
+        this.selectedObject.position.addScaledVector(forward, -moveSpeed);
+        break;
+      case "a": // 左移動
+        this.selectedObject.position.addScaledVector(right, -moveSpeed);
+        break;
+      case "d": // 右移動
+        this.selectedObject.position.addScaledVector(right, moveSpeed);
+        break;
+      case "q": // 上昇
+        this.selectedObject.position.addScaledVector(up, moveSpeed);
+        break;
+      case "e": // 下降
+        this.selectedObject.position.addScaledVector(up, -moveSpeed);
         break;
       default:
         break;
