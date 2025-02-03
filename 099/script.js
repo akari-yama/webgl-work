@@ -19,8 +19,8 @@ class ThreeApp {
     fovy: 60,
     aspect: window.innerWidth / window.innerHeight,
     near: 0.1,
-    far: 100.0,
-    position: new THREE.Vector3(0.0, 2.0, 10.0),
+    far: 50.0,
+    position: new THREE.Vector3(0.0, 2.0, 8.0),
     lookAt: new THREE.Vector3(0.0, 0.0, 0.0),
   };
   /**
@@ -57,8 +57,8 @@ class ThreeApp {
    */
   static FOG_PARAM = {
     color: 0xF1EEE7,
-    near: 15.0,
-    far: 25.0,
+    near: 10.0,
+    far: 20.0,
   };
 
   wrapper;          // canvas の親要素
@@ -74,42 +74,35 @@ class ThreeApp {
   objects = []; // 動かしたいオブジェクトを管理する配列
   selectedObject = null;
   isDragging = false; // オブジェクトをドラッグ中かどうかを管理
+  isRotating = true;  // 回転フラグ
+  rotationSpeed = 0.01;  // 回転速度
+  rotationTimeout = null;  // 選択解除後に回転を再開するためのタイマー
+
   /**
    * コンストラクタ
    * @constructor
    * @param {HTMLElement} wrapper - canvas 要素を append する親要素
    */
   constructor(wrapper) {
-    // 初期化時に canvas を append できるようにプロパティに保持
     this.wrapper = wrapper;
-
-    // this のバインド
     this.render = this.render.bind(this);
-
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
-
-    // Raycaster のインスタンス
     this.raycaster = new THREE.Raycaster();
 
-    window.addEventListener("keydown", this.handleKeyDown.bind(this));
-    window.addEventListener("click", (event) => {
-      if (event.altKey) {
-        this.handleAltClick(event);
-      } else {
-        this.handleClick(event);
-      }
-    });
-
+    // その他のイベントリスナー
+    window.addEventListener('click', this.handleClick.bind(this));
+    window.addEventListener('mousedown', this.handleAltClick.bind(this));
     window.addEventListener('mousemove', this.handleMouseMove);
     window.addEventListener('mouseup', this.handleMouseUp);
+    window.addEventListener("keydown", this.handleKeyDown.bind(this));
+    window.addEventListener('resize', this.onResize.bind(this));
+  }
 
-    // ウィンドウのリサイズ
-    window.addEventListener('resize', () => {
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-      this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-    }, false);
+  onResize() {
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
   }
 
   /**
@@ -158,9 +151,13 @@ class ThreeApp {
     );
     this.scene.add(this.ambientLight);
 
+    // シーンにグループを作成し、その中でオブジェクトを管理する
+    this.rotationGroup = new THREE.Group();
+    this.scene.add(this.rotationGroup);
+
     // シーンに glTF を追加
     this.gltfScenes.forEach((gltfScene) => {
-      this.scene.add(gltfScene);
+      this.rotationGroup.add(gltfScene);  // 全てのglTFシーンを回転グループに追加
     });
 
     // 軸ヘルパー
@@ -239,16 +236,14 @@ class ThreeApp {
   handleClick(event) {
     const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
     const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-
     this.raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this.camera);
-
     const intersects = this.raycaster.intersectObjects(this.objects, true);
 
     if (intersects.length > 0) {
       const object = intersects[0].object;
       let parent = object;
 
-      // 対象オブジェクトの親を確認
+      // 親オブジェクトを取得
       while (parent.parent) {
         if (this.objects.includes(parent)) {
           break;
@@ -256,42 +251,38 @@ class ThreeApp {
         parent = parent.parent;
       }
 
+      // オブジェクトの選択・解除
       if (this.selectedObject === parent) {
-        // 同じオブジェクトをクリックした場合は選択解除
         this.selectedObject = null;
         this.isDragging = false;
-        this.renderer.domElement.style.cursor = "grab";
+        this.renderer.domElement.style.cursor = 'grab';  // カーソルを戻す
       } else {
-        // 新しいオブジェクトを選択
         this.selectedObject = parent;
         this.isDragging = true;
-        this.renderer.domElement.style.cursor = "grabbing";
+        this.renderer.domElement.style.cursor = 'grabbing';  // カーソルを変える
       }
     } else {
-      // オブジェクト外をクリックした場合、選択解除
       this.selectedObject = null;
       this.isDragging = false;
+      this.renderer.domElement.style.cursor = 'grab';  // カーソルを戻す
     }
   }
 
   handleMouseMove(event) {
     if (this.isDragging && this.selectedObject) {
-      // マウス位置の正規化
       const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
       const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-
       const currentMouse = new THREE.Vector2(mouseX, mouseY);
 
-      // カメラ基準の平面を取得
+      // カメラ基準の平面を計算
       const planeNormal = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
       const plane = new THREE.Plane(planeNormal, -this.selectedObject.position.dot(planeNormal));
 
-      // マウス位置からレイキャスト
       this.raycaster.setFromCamera(currentMouse, this.camera);
       const intersection = new THREE.Vector3();
       this.raycaster.ray.intersectPlane(plane, intersection);
 
-      // 初期位置とマウスの移動量を考慮してオブジェクトを移動
+      // 初期位置オフセットを考慮してオブジェクトを移動
       const offset = intersection.clone().sub(this.selectedObject.position);
       if (!this.dragStartOffset) {
         this.dragStartOffset = offset;
@@ -304,7 +295,7 @@ class ThreeApp {
   handleMouseUp() {
     if (this.isDragging) {
       this.isDragging = false;
-      this.dragStartOffset = null; // 初期位置オフセットをリセット
+      this.dragStartOffset = null;
     }
   }
 
